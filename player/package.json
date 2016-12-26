@@ -1,0 +1,27 @@
+{
+  "name": "photron",
+  "version": "1.0.0",
+  "description": "A packaged Scratch project",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "node-zip": "1.1.1",
+    "js-md5": "0.4.1"
+  },
+  "repository": "https://github.com/Airhogs777/photron",
+  "keywords": [
+    "phosphorus",
+    "MIT",
+    "scratch",
+    "native",
+    "player",
+    "packager"
+  ],
+  "author": "Airhogs777",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^1.4.1"
+  }
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<title>phosphorus</title>
+<link rel=stylesheet href=player.css>
+<div class=controls>
+  <span class=stop></span>
+  <span class=pause></span>
+  <span class=flag title="Shift+click to enable turbo mode."></span>
+  <div class=turbo>Turbo Mode</div>
+  <span class=close onclick="javascript:window.close()"></span>
+  <span class=full-screen></span>
+</div>
+<div class=player></div>
+<div class=internal-error>
+  An internal error occurred. <a id=error-bug-link target=_blank href=https://github.com/nathan/phosphorus/issues/new>Click here</a> to file a bug report.
+</div>
+<script src=fonts.js></script>
+<script src=lib/rgbcolor.js></script>
+<script src=lib/StackBlur.js></script>
+<script src=lib/canvg.js></script>
+<script src=phosphorus.js></script>
+<script src=player.js></script>
+<script>
+
+(function() {
+  'use strict';
+  var autoStart = true;
+  var lightContent = false;
+
+  document.title = 'photron';
+  P.player.load(undefined);
+
+}());
+
+</script>
