@@ -126,7 +126,6 @@ if(fs.existsSync(CACHE_DIR)) {
   
     packager({dir: PLAYER_DIR, all: true, out: CACHE_DIR}, function(error, paths) {
       if(error) {
-        projectPackageLock.unlock();
         throw error;
       }
       paths.forEach(function(apppath) {
