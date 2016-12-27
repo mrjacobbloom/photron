@@ -5,4 +5,4 @@ Package Scratch projects as native applications using Phosphorus and Electron. I
 * It runs natively using [electron](https://github.com/electron/electron) (Copyright)
 * It uses a hacked version of MegaApuTurkUltra's [Scratch Project Backup](http://codepen.io/MegaApuTurkUltra/pen/pvYWRK)
 * The packager runs on Heroku
-* Everything else is by me!
+* Everything else is by Airhogs777 and MegaApuTurkUltra
