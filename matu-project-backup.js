@@ -92,6 +92,7 @@ function downloadCostume(callback){
 
 function hasFffmpeg() {
   try {
+    var isWin = /^win/.test(process.platform);
     spawn(isWin ? 'ffprobe.exe' : 'ffprobe', ['-version']);
     return true;
   } catch(e) {
