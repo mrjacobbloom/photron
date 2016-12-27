@@ -513,7 +513,7 @@ var P = (function() {
     if (ext === 'svg') {
       var cb = function(source) {
         var div = document.createElement('div');
-        div.innerHTML = source;
+        div.innerHTML = source.replace(/svg:/gi,'');
         var svg = div.getElementsByTagName('svg')[0];
         svg.style.visibility = 'hidden';
         svg.style.position = 'absolute';
