@@ -1,6 +1,9 @@
 var JSZip = require('jszip');
 var fs = require('fs');
 var http = require('https');
+var os = require('os');
+var crypto = require('crypto');
+var exec = require('child_process').exec;
 
 var maxWidth = 0;
 var jszip = null;
@@ -12,6 +15,14 @@ var soundsToDownload = [];
 var costumesToDownload = [];
 var totalAssets = 0;
 var completeAssets = 0;
+
+var hasFfmpeg = false;
+exec('ffprobe -version', function(error, stdout, stderr) {
+  if(!error) {
+    hasFfmpeg = true;
+    console.log("ffmpeg detected");
+  }
+});
 
 function startDownload(projectId, callback){
 	logMessage("Downloading project: "+projectId);
@@ -35,7 +46,12 @@ function startDownload(projectId, callback){
 			setProgress(10);
 			logMessage("Loaded JSON");
 
-			project = JSON.parse(string);
+      try {
+        project = JSON.parse(string);
+      } catch(e) {
+        perror(e, callback);
+        return;
+      }
 			processSoundsAndCostumes(project);
 			if(project.hasOwnProperty("children")){
 				for(child in project.children){
@@ -46,26 +62,36 @@ function startDownload(projectId, callback){
 			jszip.file("project.json", JSON.stringify(project));
 			downloadCostume(callback);
     });
-	});
+    response.on('error', (e) => {
+      perror(e, callback);
+    });
+	}).on('error', (e) => {
+    perror(e, callback);
+  });
 }
 
 function downloadCostume(callback){
 	if(costumesToDownload.length > 0){
 		var current = costumesToDownload.pop();
 		logMessage("Loading asset "+current.costumeName+" ("+completeAssets+"/"+totalAssets+")");
-		var string = ''
+		var parts = [];
 		http.get("https://cdn.assets.scratch.mit.edu/internalapi/asset/"+current.baseLayerMD5+"/get/", function(response){
 				response.on('data', function(data){
-		      string += data;
+		      parts.push(data);
 			  });
 		    response.on('end', function(){
 					var ext = current.baseLayerMD5.match(/\.[a-zA-Z0-9]+/)[0];
-					jszip.file(current.baseLayerID+ext, string, {binary: true});
+					jszip.file(current.baseLayerID+ext, Buffer.concat(parts), {binary: true});
 					completeAssets++;
 					setProgress(10+89*(completeAssets/totalAssets));
 					downloadCostume(callback);
 				});
-		});
+        response.on('error', (e) => {
+          perror(e, callback);
+        });
+		}).on('error', (e) => {
+      perror(e, callback);
+    });
 	} else {
 		downloadSound(callback);
 	}
@@ -75,26 +101,92 @@ function downloadSound(callback){
 	if(soundsToDownload.length > 0){
 		var current = soundsToDownload.pop();
 		logMessage("Loading asset "+current.soundName+" ("+completeAssets+"/"+totalAssets+")");
-		var string = '';
+		var parts = [];
 		http.get("https://cdn.assets.scratch.mit.edu/internalapi/asset/"+current.md5+"/get/", function(response){
 			response.on('data', function(data){
-				string += data;
+				parts.push(data);
 			});
 			response.on('end', function(){
 				var ext = current.md5.match(/\.[a-zA-Z0-9]+/)[0];
-				jszip.file(current.soundID+ext, string, {binary: true});
-				completeAssets++;
-				setProgress(10+89*(completeAssets/totalAssets));
-				downloadSound(callback);
+        
+        var soundFile = Buffer.concat(parts);
+        
+        function done(buffer) {
+          jszip.file(current.soundID+ext, buffer, {binary: true});
+          completeAssets++;
+          setProgress(10+89*(completeAssets/totalAssets));
+          downloadSound(callback);
+        }
+        
+        if(!hasFfmpeg) {
+          done(soundFile);
+        } else {
+          // check if it's adpcm
+          var tmpdir = os.tmpdir();
+          var inputFile = tmpdir + '/photron'+crypto.randomBytes(4).readUInt32LE(0) + '.something';
+          var outputFile = tmpdir + '/photron'+crypto.randomBytes(4).readUInt32LE(0) + '.wav';
+          
+          function cleanup() {
+            try {
+              fs.unlinkSync(inputFile);
+              fs.unlinkSync(outputFile);
+            } catch(e) {
+              // don't care
+            }
+          }
+          
+          fs.writeFileSync(inputFile, soundFile);
+          exec('ffprobe ' + inputFile, function(error, stdout, stderr) {
+            if (error) {
+              // oh well
+              done(soundFile);
+              cleanup();
+              return;
+            }
+            console.log(`ffprobe out: ${stdout}`);
+            console.log(`ffprobe err: ${stderr}`);
+            if(stdout.match(/adpcm/) != null || stderr.match(/adpcm/) != null) {
+              console.log('Converting adpcm to pcm');
+              // convert to pcm so phosphorus can play it
+              exec(`ffmpeg -i ${inputFile} ${outputFile}`, function(error, stdout, stderr) {
+                if (error) {
+                  // oh well
+                  done(soundFile);
+                  cleanup();
+                  return;
+                }
+                console.log(`ffmpeg out: ${stdout}`);
+                console.log(`ffmpeg err: ${stderr}`);
+                
+                if(fs.existsSync(outputFile)) {
+                  done(fs.readFileSync(outputFile));
+                } else {
+                  done(soundFile);
+                }
+                cleanup();
+              });
+            } else {
+              done(soundFile);
+              cleanup();
+            }
+          });
+        }
+        
+				
 			});
-		});
+      response.on('error', (e) => {
+        perror(e, callback);
+      });
+		}).on('error', (e) => {
+      perror(e, callback);
+    });
 	} else {
 		logMessage("Generating ZIP...");
-		var content = jszip.generate({base64:false,compression:'DEFLATE'});
-		logMessage("Saving...");
-		fs.writeFileSync('tmp/project.zip', content, 'binary');
-
-		psuccess(callback);
+    jszip.generateAsync({streamFiles:true,compression:'DEFLATE',type:'nodebuffer'}).then(function(file) {
+      psuccess(file, callback);
+    }).catch(function(err) {
+      perror(err, callback);
+    });
 	}
 }
 
@@ -119,14 +211,15 @@ function processSoundsAndCostumes(node){
 	}
 }
 
-function perror(){
+function perror(err, callback){
 	logMessage("Download error");
 	setProgress(100);
+  if(callback) callback(err, null);
 }
 
-function psuccess(callback){
+function psuccess(file, callback){
 	logMessage("Finished!");
-	if (callback) callback();
+	if (callback) callback(null, file);
 }
 
 function setProgress(perc){

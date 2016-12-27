@@ -7,8 +7,9 @@
     "start": "electron ."
   },
   "dependencies": {
-    "node-zip": "1.1.1",
-    "js-md5": "0.4.1"
+    "js-md5": "0.4.1",
+    "jszip": "^2.4.0",
+    "node-zip": "1.1.1"
   },
   "repository": "https://github.com/Airhogs777/photron",
   "keywords": [

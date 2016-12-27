@@ -25,3 +25,15 @@
     .jumbotron .lang-logo img {
       max-width: 100%; }
 
+.os input[type=checkbox] {
+  vertical-align: text-bottom;
+}
+
+.error {
+  color: red;
+}
+
+#dlframe {
+  width: 0;
+  height: 0;
+}

@@ -5,7 +5,10 @@ P.player = (function() {
   var frameId = null;
   var isFullScreen = false;
 
+  var progressBar = document.querySelector('.progress-bar');
   var player = document.querySelector('.player');
+  var projectLink = document.querySelector('.project-link');
+  var bugLink = document.querySelector('#bug-link');
 
   var controls = document.querySelector('.controls');
   var flag = document.querySelector('.flag');
@@ -72,6 +75,7 @@ P.player = (function() {
   function fullScreenClick(e) {
     if (e) e.preventDefault();
     if (!stage) return;
+    document.documentElement.classList.toggle('fs');
     isFullScreen = !isFullScreen;
     if (!e || !e.shiftKey) {
       if (isFullScreen) {
@@ -112,7 +116,7 @@ P.player = (function() {
 
   function updateFullScreen() {
     if (!stage) return;
-    if (true) {
+    if (isFullScreen) {
       window.scrollTo(0, 0);
       var padding = 8;
       var w = window.innerWidth - padding * 2;
@@ -167,10 +171,7 @@ P.player = (function() {
     if (isFullScreen !== document.webkitIsFullScreen) fullScreenClick();
   });
 
-  function load(id, cb) {
-    P.player.projectId = id;
-    P.player.projectURL = id ? 'http://scratch.mit.edu/projects/' + id + '/' : '';
-
+  function load(cb, titleCallback) {
     if (stage) {
       stage.stopAll();
       stage.pause();
@@ -179,8 +180,38 @@ P.player = (function() {
     turbo.style.display = 'none';
     error.style.display = 'none';
     pause.className = 'pause';
+    progressBar.style.display = 'none';
+    
+    var buf = require('fs').readFileSync(require('path').join(__dirname, 'project.zip'));
+    
+    showProgress(P.IO.loadSB2Project(buf), cb);
+    
+    // call titleCallback?
+  }
 
-    P.IO.loadSB2File(null, function(s) {
+  function showError(e) {
+    error.style.display = 'block';
+    errorBugLink.href = 'https://github.com/nathan/phosphorus/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttp://phosphorus.github.io/#' + P.player.projectId + '\n' + navigator.userAgent + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
+    console.error(e.stack);
+  }
+
+  function showProgress(request, loadCallback) {
+    progressBar.style.display = 'none';
+    setTimeout(function() {
+      progressBar.style.width = '10%';
+      progressBar.className = 'progress-bar';
+      progressBar.style.opacity = 1;
+      progressBar.style.display = 'block';
+    });
+    request.onload = function(s) {
+      progressBar.style.width = '100%';
+      setTimeout(function() {
+        progressBar.style.opacity = 0;
+        setTimeout(function() {
+          progressBar.style.display = 'none';
+        }, 300);
+      }, 100);
+
       var zoom = stage ? stage.zoom : 1;
       window.stage = stage = s;
       stage.start();
@@ -191,19 +222,24 @@ P.player = (function() {
 
       player.appendChild(stage.root);
       stage.focus();
-
-      stage.triggerGreenFlag();
-    }, this);
-  }
-
-  function showError(e) {
-    error.style.display = 'block';
-    errorBugLink.href = 'https://github.com/Airhogs777/photron/issues/new?title=' + encodeURIComponent(P.player.projectTitle || P.player.projectURL) + '&body=' + encodeURIComponent('\n\n\n' + P.player.projectURL + '\nhttp://phosphorus.github.io/#' + P.player.projectId + '\n' + navigator.userAgent + (e.stack ? '\n\n```\n' + e.stack + '\n```' : ''));
-    console.error(e.stack);
+      if (loadCallback) {
+        loadCallback(stage);
+        loadCallback = null;
+      }
+    };
+    request.onerror = function(e) {
+      progressBar.style.width = '100%';
+      progressBar.className = 'progress-bar error';
+      console.error(e.stack);
+    };
+    request.onprogress = function(e) {
+      progressBar.style.width = (10 + e.loaded / e.total * 90) + '%';
+    };
   }
 
   return {
-    load: load
+    load: load,
+    showProgress: showProgress
   };
 
 }());

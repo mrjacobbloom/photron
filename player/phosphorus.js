@@ -1,6 +1,3 @@
-var fs = require('fs');
-var jsmd5 = require('js-md5');
-
 var P = (function() {
   'use strict';
 
@@ -335,22 +332,51 @@ var P = (function() {
   IO.loadSB2Project = function(ab, callback, self) {
     var request = new CompositeRequest;
     IO.init(request);
-    request.getResult = function() {
-      return null;
-    };
 
-    fs.readFile('project.zip', function read(err, data) {
-      IO.zip = new require('node-zip')(data, {base64: false, checkCRC32: true});
-
+    try {
+      IO.zip = new JSZip(ab);
       var json = IO.parseJSONish(IO.zip.file('project.json').asText());
 
       IO.loadProject(json);
-      callback(new Stage().fromJSON(json));
-    });
+      if (callback) request.onLoad(callback.bind(self));
+      if (request.isDone) {
+        request.load(new Stage().fromJSON(json));
+      } else {
+        request.defer = false;
+        request.getResult = function() {
+          return new Stage().fromJSON(json);
+        };
+      }
+    } catch (e) {
+      request.error(e);
+    }
+
+    return request;
   };
 
   IO.loadSB2File = function(f, callback, self) {
-    IO.loadSB2Project(undefined, callback);
+    var cr = new CompositeRequest;
+    cr.defer = true;
+    var request = new Request;
+    cr.add(request);
+    var reader = new FileReader;
+    reader.onloadend = function() {
+      cr.defer = true;
+      cr.add(IO.loadSB2Project(reader.result, function(result) {
+        cr.defer = false;
+        cr.getResult = function() {
+          return result;
+        };
+        cr.update();
+      }));
+      request.load();
+    };
+    reader.onprogress = function(e) {
+      request.progress(e.loaded, e.total, e.lengthComputable);
+    };
+    reader.readAsArrayBuffer(f);
+    if (callback) cr.onLoad(callback.bind(self));
+    return cr;
   };
 
   IO.loadProject = function(data) {
@@ -401,7 +427,6 @@ var P = (function() {
   };
 
   IO.loadBase = function(data) {
-
     data.scripts = data.scripts || [];
     data.costumes = IO.loadArray(data.costumes, IO.loadCostume);
     data.sounds = IO.loadArray(data.sounds, IO.loadSound);
@@ -546,15 +571,14 @@ var P = (function() {
       }
     } else {
       if (IO.zip) {
-        //var request = new Request;
+        var request = new Request;
         var image = new Image;
-        /*image.onload = function() {
-
+        image.onload = function() {
+          if (callback) callback(image);
           request.load();
-        };*/
+        };
         image.src = 'data:image/' + (ext === 'jpg' ? 'jpeg' : ext) + ';base64,' + btoa(f.asBinary());
-        if (callback) callback(image);
-        //IO.projectRequest.add(request);
+        IO.projectRequest.add(request);
       } else {
         IO.projectRequest.add(
           IO.loadImage(IO.ASSET_URL + md5 + '/get/', function(result) {

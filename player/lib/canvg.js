@@ -10,15 +10,16 @@
 
 	'use strict';
 
+  // doesn't play nice with electron. Make sure to force web-style dependencies by commenting it all out :D
 	// export as AMD...
-	if ( typeof define !== 'undefined' && define.amd ) {
+	/*if ( typeof define !== 'undefined' && define.amd ) {
 		define('canvgModule', [ 'rgbcolor', 'stackblur' ], factory );
 	}
 
 	// ...or as browserify
 	else if ( typeof module !== 'undefined' && module.exports ) {
 		module.exports = factory( require( 'rgbcolor' ), require( 'stackblur' ) );
-	}
+	}*/
 
 	global.canvg = factory( global.RGBColor, global.stackBlur );
 

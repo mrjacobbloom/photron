@@ -1,3 +1,24 @@
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background: #cde;
+  -webkit-transition: .3s;
+  -moz-transition: .3s;
+  -o-transition: .3s;
+  transition: .3s;
+}
+.light-content .progress-bar {
+  background: #468;
+}
+.progress-bar.error {
+  background: #ecc;
+}
+.light-content .progress-bar.error {
+  background: #844;
+}
 body {
   margin: 0;
 }
@@ -20,6 +41,7 @@ body {
   opacity: .6;
   background-image: url(icons.svg);
   text-decoration: none;
+  -webkit-app-region: no-drag;
 }
 .controls .flag {
   background-position: 0 0;
@@ -37,10 +59,26 @@ body {
   float: left;
   background-position: -128px 0;
 }
-.controls .close {
-  float: left;
-  background-position: 0 -32px;
+.controls .close, .controls .close-mac {
+  background-image: none;
 }
+.controls .close::after, .controls .close-mac::after {
+  content: "X";
+  color: white;
+  font-family: sans-serif;
+  background: red;
+  width: 32px;
+  height: 32px;
+  display: block;
+  line-height: 32px;
+}
+.controls .close {
+  float: right;
+}
+.controls .close-mac {
+  float: left;
+}
+
 .controls span:active,
 .project-link:active {
   opacity: 1 !important;
@@ -112,4 +150,7 @@ body {
 }
 .fs .player {
   box-shadow: none;
+}
+.fs .controls {
+  background: black;
 }

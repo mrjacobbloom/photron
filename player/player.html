@@ -4,11 +4,13 @@
 <title>phosphorus</title>
 <link rel=stylesheet href=player.css>
 <div class=controls>
+  <div class=progress-bar></div>
+  <span class=close onclick="javascript:window.close()" oncontextmenu="require('electron').remote.getCurrentWebContents().toggleDevTools();"></span>
   <span class=stop></span>
   <span class=pause></span>
   <span class=flag title="Shift+click to enable turbo mode."></span>
   <div class=turbo>Turbo Mode</div>
-  <span class=close onclick="javascript:window.close()"></span>
+  <span class=close-mac onclick="javascript:window.close()"></span>
   <span class=full-screen></span>
 </div>
 <div class=player></div>
@@ -22,14 +24,22 @@
 <script src=phosphorus.js></script>
 <script src=player.js></script>
 <script>
-
+window.JSZip = require('jszip');
 (function() {
   'use strict';
-  var autoStart = true;
-  var lightContent = false;
+  
+  if(process.platform == "darwin") {
+    document.querySelector(".controls .close").style.display = "none";
+  } else {
+    document.querySelector(".controls .close-mac").style.display = "none";
+  }
 
   document.title = 'photron';
-  P.player.load(undefined);
+  P.player.load(function(stage) {
+    stage.triggerGreenFlag();
+  }, function(title) {
+    document.title = title ? title + ' \xb7 photron' : 'photron';
+  });
 
 }());
 
