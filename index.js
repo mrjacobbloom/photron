@@ -84,13 +84,13 @@ app.get(/\/\d+/, function(request, response) {
     }
     if(request.query.linuxarm == '') {
       console.log(' - linuxarm');
-       archive.directory(CACHE_DIR + '/photron-linux-armv7l', basedir + '-linux-armv7l');
-       archive.append(file, { name: basedir + '-linux-armv7l/resources/app/project.zip' });
+      archive.directory(CACHE_DIR + '/photron-linux-armv7l', basedir + '-linux-armv7l');
+      archive.append(file, { name: basedir + '-linux-armv7l/resources/app/project.zip' });
     }
     if(request.query.mac64 == '') {
       console.log(' - mac64');
-      // TODO: ADD MAC HERE. My windows machine won't generate the mac files :(
-      // drop the project.zip into wherever electron runs from
+      archive.directory(CACHE_DIR + '/photron-darwin-x64', basedir + '-darwin-x64');
+      archive.append(file, { name: basedir + '-darwin-x64/photron.app/Contents/Resources/app/project.zip' });
     }
 
     // finalize the archive (ie we are done appending files but streams have to finish yet)
