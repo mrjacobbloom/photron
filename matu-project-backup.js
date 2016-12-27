@@ -4,7 +4,6 @@ var http = require('https');
 var os = require('os');
 var crypto = require('crypto');
 var exec = require('child_process').exec;
-var spawn = require('child_process').spawn;
 
 var maxWidth = 0;
 var jszip = null;
@@ -16,6 +15,14 @@ var soundsToDownload = [];
 var costumesToDownload = [];
 var totalAssets = 0;
 var completeAssets = 0;
+
+var hasFfmpeg = false;
+exec('ffprobe -version', function(error, stdout, stderr) {
+  if(!error) {
+    hasFfmpeg = true;
+    console.log("ffmpeg detected");
+  }
+});
 
 function startDownload(projectId, callback){
 	logMessage("Downloading project: "+projectId);
@@ -90,16 +97,6 @@ function downloadCostume(callback){
 	}
 }
 
-function hasFffmpeg() {
-  try {
-    var isWin = /^win/.test(process.platform);
-    spawn(isWin ? 'ffprobe.exe' : 'ffprobe', ['-version']);
-    return true;
-  } catch(e) {
-    return false;
-  }
-}
-
 function downloadSound(callback){
 	if(soundsToDownload.length > 0){
 		var current = soundsToDownload.pop();
@@ -121,7 +118,7 @@ function downloadSound(callback){
           downloadSound(callback);
         }
         
-        if(!hasFffmpeg) {
+        if(!hasFfmpeg) {
           done(soundFile);
         } else {
           // check if it's adpcm
