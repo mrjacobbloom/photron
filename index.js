@@ -1,9 +1,15 @@
 var fs = require('fs-extra');
 var http = require('http');
+var path = require('path');
+var spawn = require('child_process').spawn;
 var express = require('express');
 var MATUProjectBackup = require('./matu-project-backup.js');
 var packager = require('electron-packager');
 var archiver = require('archiver');
+
+var CACHE_DIR = 'electron-cache';
+var PLAYER_DIR = 'player';
+
 var app = express();
 
 app.set('port', (process.env.PORT || 5000));
@@ -21,60 +27,113 @@ app.get('/', function(request, response) {
 app.get(/\/\d+/, function(request, response) {
   var PATH = request.path.replace(/\//, '');
   console.log('***********Packaging ' + PATH);
+  console.log('- versions: ' + JSON.stringify(request.query));
 
-  // copy the player to a temp folder
-  console.log('- emptying tmp directory');
-  fs.emptydirSync('tmp');
-  console.log('- copying player to tmp')
-  fs.copySync('player', 'tmp');
+  console.log('- downloading project to ZIP');
+  
+  MATUProjectBackup(PATH, function(err, file) {
+    function sendError() {
+      response.status(500);
+      response.setHeader('Content-type', 'text/html');
+      response.end('<script>window.parent.photron_error()</script>');
+    }
+    
+    if(err) {
+      console.error(err);
+      sendError();
+      return;
+    }
+    
+    var archive = archiver('zip', {});
 
-  console.log('- downloading ZIP to file');
-  MATUProjectBackup(PATH,function() {
-    console.log('- packaging as app:');
-    packager({dir: 'tmp', arch: 'all', out: 'tmp/out'}, function(error, paths) {
-
-      paths.forEach(function(apppath) {
-        console.log('  - packaged ' + apppath);
-      });
-
-      // create a file to stream archive data to.
-      var outname = '/tmp/archived.zip';
-      console.log('- writing to archive ' + outname);
-      var output = fs.createWriteStream(outname);
-      var archive = archiver('zip', { store: true });
-
-      // good practice to catch this error explicitly
-      archive.on('error', function(err) {
-        console.log('ERROR: archive threw error ' + err);
-      });
-      archive.pipe(output);
-
-      // append files
-      archive.directory('tmp/out', 'photron-' + PATH);
-
-      // finalize the archive (ie we are done appending files but streams have to finish yet)
-      archive.finalize();
-
-      output.on('close', function() {
-        console.log('- archive finalized, ' + archive.pointer() + ' total bytes');
-
-        // send the file to user
-        console.log('- sending file to client')
-        var file = fs.readFileSync(outname, 'binary');
-        response.setHeader('Content-disposition', 'attachment; filename=photron-' + PATH + '.zip');
-        response.setHeader('Content-Length', file.length);
-        response.setHeader('Content-type', 'application/zip');
-        response.write(file, 'binary');
-        response.end();
-
-        // empty the tmp directory
-        console.log('- emptying tmp directory');
-        fs.emptydirSync('tmp');
-      });
+    // good practice to catch this error explicitly
+    archive.on('error', function(err) {
+      console.error(err);
+      sendError();
     });
+    
+    response.setHeader('Content-disposition', 'attachment; filename=photron-' + PATH + '.zip');
+    response.setHeader('Content-type', 'application/zip');
+    
+    archive.pipe(response);
+    response.on('finish', function() {
+      console.log(' - Response sent');
+    });
+
+    // append files
+    var basedir = 'photron-' + PATH;
+    if(request.query.win32 == '') {
+      console.log(' - win32');
+      archive.directory(CACHE_DIR + '/photron-win32-ia32', basedir + '-win32-ia32');
+      archive.append(file, { name: basedir + '-win32-ia32/resources/app/project.zip' });
+    }
+    if(request.query.win64 == '') {
+      console.log(' - win64');
+      archive.directory(CACHE_DIR + '/photron-win32-x64', basedir + '-win32-x64');
+      archive.append(file, { name: basedir + '-win32-x64/resources/app/project.zip' });
+    }
+    if(request.query.linux32 == '') {
+      console.log(' - linux32');
+      archive.directory(CACHE_DIR + '/photron-linux-ia32', basedir + '-linux-ia32');
+      archive.append(file, { name: basedir + '-linux-ia32/resources/app/project.zip' });
+    }
+    if(request.query.linux64 == '') {
+      console.log(' - linux64');
+      archive.directory(CACHE_DIR + '/photron-linux-x64', basedir + '-linux-x64');
+      archive.append(file, { name: basedir + '-linux-x64/resources/app/project.zip' });
+    }
+    if(request.query.linuxarm == '') {
+      console.log(' - linuxarm');
+       archive.directory(CACHE_DIR + '/photron-linux-armv7l', basedir + '-linux-armv7l');
+       archive.append(file, { name: basedir + '-linux-armv7l/resources/app/project.zip' });
+    }
+    if(request.query.mac64 == '') {
+      console.log(' - mac64');
+      // TODO: ADD MAC HERE. My windows machine won't generate the mac files :(
+      // drop the project.zip into wherever electron runs from
+    }
+
+    // finalize the archive (ie we are done appending files but streams have to finish yet)
+    archive.finalize();
   });
 });
 
-app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
-});
+function startApp() {
+  app.listen(app.get('port'), function() {
+    console.log('Node app is running on port', app.get('port'));
+  });
+}
+
+if(fs.existsSync(CACHE_DIR)) {
+  console.log('Electron package cache exists');
+  startApp();
+} else {
+  console.log('Running npm install...');
+  var isWin = /^win/.test(process.platform);
+  var npmProc = spawn(isWin ? 'npm.cmd' : 'npm', ['install'], { cwd: path.resolve(PLAYER_DIR) });
+
+  npmProc.stdout.on('data', function(data) {
+    console.log(data.toString());
+  });
+
+  npmProc.stderr.on('data', function(data) {
+    console.error(data.toString());
+  });
+
+  npmProc.on('close', function(code) {
+    console.log('child process exited with code ' + code);
+    console.log('Creating electron package cache...');
+  
+    packager({dir: PLAYER_DIR, all: true, out: CACHE_DIR}, function(error, paths) {
+      if(error) {
+        projectPackageLock.unlock();
+        throw error;
+      }
+      paths.forEach(function(apppath) {
+        console.log('  - packaged ' + apppath);
+      });
+    
+      startApp();
+    });
+  });
+}

@@ -13,7 +13,7 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 480, height: 360 + 32, frame: false})
+  mainWindow = new BrowserWindow({width: 480, height: 360 + 32, frame: false, resizable: false})
   mainWindow.setAspectRatio(480/(360+32));
 
   // and load the index.html of the app.
@@ -25,7 +25,6 @@ function createWindow () {
   mainWindow.webContents.on('did-finish-load', () => {
     //mainWindow.webContents.send('PID', '117326838');
   })
-
 
 
   // Emitted when the window is closed.
