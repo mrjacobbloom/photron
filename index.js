@@ -127,7 +127,8 @@ if(fs.existsSync(CACHE_DIR)) {
     console.log('child process exited with code ' + code);
     console.log('Creating electron package cache...');
   
-    packager({dir: PLAYER_DIR, all: true, out: CACHE_DIR}, function(error, paths) {
+    //packager({dir: PLAYER_DIR, all: true, out: CACHE_DIR}, function(error, paths) {
+    packager({dir: PLAYER_DIR, arch: 'all', platform: "linux,darwin,mas", out: CACHE_DIR}, function(error, paths) {
       if(error) {
         throw error;
       }
