@@ -27,7 +27,7 @@ app.get('/', function(request, response) {
 
 app.get(/\/\d+/, function(request, response) {
   if(!ready) {
-    response.render('pages/not_ready');
+    response.render('pages/not_ready.ejs');
     return;
   }
   
