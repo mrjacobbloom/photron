@@ -6,6 +6,7 @@ var express = require('express');
 var MATUProjectBackup = require('./matu-project-backup.js');
 var packager = require('electron-packager');
 var archiver = require('archiver');
+var ready = false;
 
 var CACHE_DIR = 'electron-cache';
 var PLAYER_DIR = 'player';
@@ -25,6 +26,11 @@ app.get('/', function(request, response) {
 });
 
 app.get(/\/\d+/, function(request, response) {
+  if(!ready) {
+    response.render('pages/not_ready');
+    return;
+  }
+  
   var PATH = request.path.replace(/\//, '');
   console.log('***********Packaging ' + PATH);
   console.log('- versions: ' + JSON.stringify(request.query));
@@ -133,6 +139,7 @@ if(fs.existsSync(CACHE_DIR)) {
       paths.forEach(function(apppath) {
         console.log('  - packaged ' + apppath);
       });
+      ready = true;
     });
   });
 }
