@@ -111,6 +111,9 @@ if(fs.existsSync(CACHE_DIR)) {
   console.log('Running npm install...');
   var isWin = /^win/.test(process.platform);
   var npmProc = spawn(isWin ? 'npm.cmd' : 'npm', ['install'], { cwd: path.resolve(PLAYER_DIR) });
+  
+  console.log('Running npm install for player/');
+  var npmProc = spawn('./installPlayer.sh');
 
   npmProc.stdout.on('data', function(data) {
     console.log(data.toString());
