@@ -98,11 +98,9 @@ app.get(/\/\d+/, function(request, response) {
   });
 });
 
-function startApp() {
-  app.listen(app.get('port'), function() {
-    console.log('Node app is running on port', app.get('port'));
-  });
-}
+app.listen(app.get('port'), function() {
+  console.log('Node app is running on port', app.get('port'));
+});
 
 if(fs.existsSync(CACHE_DIR)) {
   console.log('Electron package cache exists');
@@ -135,8 +133,6 @@ if(fs.existsSync(CACHE_DIR)) {
       paths.forEach(function(apppath) {
         console.log('  - packaged ' + apppath);
       });
-    
-      startApp();
     });
   });
 }
