@@ -9,7 +9,8 @@
   "dependencies": {
     "js-md5": "0.4.1",
     "jszip": "^2.4.0",
-    "node-zip": "1.1.1"
+    "node-zip": "1.1.1",
+    "electron": "1.4.13"
   },
   "repository": "https://github.com/Airhogs777/photron",
   "keywords": [
