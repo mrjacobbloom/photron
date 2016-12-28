@@ -27,7 +27,9 @@ app.get('/', function(request, response) {
 
 app.get(/\/\d+/, function(request, response) {
   if(!ready) {
-    response.render('pages/not_ready.ejs');
+    response.status(500);
+    response.setHeader('Content-type', 'text/html');
+    response.end('<script>window.parent.photron_error("Whoops! Our server is still starting up. Try again in a couple of minutes.")</script>');
     return;
   }
   
@@ -110,7 +112,7 @@ app.listen(app.get('port'), function() {
 
 if(fs.existsSync(CACHE_DIR)) {
   console.log('Electron package cache exists');
-  startApp();
+  ready = true;
 } else {
   console.log('Running npm install...');
   var isWin = /^win/.test(process.platform);

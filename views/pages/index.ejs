@@ -40,9 +40,9 @@ dlframe.addEventListener("error", function() {
   down.disabled = false;
   error.textContent = "Oops! There was an error";
 });
-window.photron_error = function() {
+window.photron_error = function(text) {
   down.disabled = false;
-  error.textContent = "Oops! There was an error";
+  error.textContent = text || "Oops! There was an error";
 }
 
 project.addEventListener("input", function() {
