@@ -6,7 +6,6 @@ var express = require('express');
 var MATUProjectBackup = require('./matu-project-backup.js');
 var packager = require('electron-packager');
 var archiver = require('archiver');
-var ready = false;
 
 var CACHE_DIR = 'electron-cache';
 var PLAYER_DIR = 'player';
@@ -26,13 +25,6 @@ app.get('/', function(request, response) {
 });
 
 app.get(/\/\d+/, function(request, response) {
-  if(!ready) {
-    response.status(500);
-    response.setHeader('Content-type', 'text/html');
-    response.end('<script>window.parent.photron_error("Whoops! Our server is still starting up. Try again in a couple of minutes.")</script>');
-    return;
-  }
-  
   var PATH = request.path.replace(/\//, '');
   console.log('***********Packaging ' + PATH);
   console.log('- versions: ' + JSON.stringify(request.query));
@@ -109,39 +101,3 @@ app.get(/\/\d+/, function(request, response) {
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
-
-if(fs.existsSync(CACHE_DIR)) {
-  console.log('Electron package cache exists');
-  ready = true;
-} else {
-  console.log('Running npm install...');
-  var isWin = /^win/.test(process.platform);
-  var npmProc = spawn(isWin ? 'npm.cmd' : 'npm', ['install'], { cwd: path.resolve(PLAYER_DIR) });
-  
-  console.log('Running npm install for player/');
-  var npmProc = spawn('./installPlayer.sh');
-
-  npmProc.stdout.on('data', function(data) {
-    console.log(data.toString());
-  });
-
-  npmProc.stderr.on('data', function(data) {
-    console.error(data.toString());
-  });
-
-  npmProc.on('close', function(code) {
-    console.log('child process exited with code ' + code);
-    console.log('Creating electron package cache...');
-  
-    //packager({dir: PLAYER_DIR, all: true, out: CACHE_DIR}, function(error, paths) {
-    packager({dir: PLAYER_DIR, arch: 'all', platform: "linux,darwin,mas", out: CACHE_DIR}, function(error, paths) {
-      if(error) {
-        throw error;
-      }
-      paths.forEach(function(apppath) {
-        console.log('  - packaged ' + apppath);
-      });
-      ready = true;
-    });
-  });
-}
