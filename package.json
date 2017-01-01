@@ -7,7 +7,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "package": "node package.js"
   },
   "dependencies": {
     "archiver": "1.3.0",

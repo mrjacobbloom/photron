@@ -1,10 +1,8 @@
 var fs = require('fs-extra');
 var http = require('http');
 var path = require('path');
-var spawn = require('child_process').spawn;
 var express = require('express');
 var MATUProjectBackup = require('./matu-project-backup.js');
-var packager = require('electron-packager');
 var archiver = require('archiver');
 
 var CACHE_DIR = 'electron-cache';
