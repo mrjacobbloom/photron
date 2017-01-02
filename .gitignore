@@ -1,5 +1,6 @@
 # Node build artifacts
 node_modules
+!electron-cache/**/node_modules
 npm-debug.log
 
 # Local development
