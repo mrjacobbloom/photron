@@ -10,7 +10,7 @@
   <span class=pause></span>
   <span class=flag title="Shift+click to enable turbo mode."></span>
   <div class=turbo>Turbo Mode</div>
-  <span class=close-mac onclick="javascript:window.close()"></span>
+  <span class=close-mac onclick="javascript:window.close()" oncontextmenu="require('electron').remote.getCurrentWebContents().toggleDevTools();"></span>
   <span class=full-screen></span>
 </div>
 <div class=player></div>
