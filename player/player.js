@@ -116,21 +116,17 @@ P.player = (function() {
 
   function updateFullScreen() {
     if (!stage) return;
-    if (isFullScreen) {
-      window.scrollTo(0, 0);
-      var padding = 8;
-      var w = window.innerWidth - padding * 2;
-      var h = window.innerHeight - padding - controls.offsetHeight;
-      w = Math.min(w, h / .75);
-      h = w * .75 + controls.offsetHeight;
-      document.body.style.width = w + 'px';
-      document.body.style.height = h + 'px';
-      document.body.style.marginLeft = (window.innerWidth - w) / 2 + 'px';
-      document.body.style.marginTop = (window.innerHeight - h - padding) / 2 + 'px';
-      stage.setZoom(w / 480);
-    } else {
-      stage.setZoom(1);
-    }
+    var padding = 0;
+    var w = window.innerWidth - padding * 2;
+    var h = window.innerHeight - padding - controls.offsetHeight;
+    console.log([w,h])
+    w = Math.min(w, h / .75);
+    h = w * .75 + controls.offsetHeight;
+    document.body.style.width = w + 'px';
+    document.body.style.height = h + 'px';
+    document.body.style.marginLeft = (window.innerWidth - w) / 2 + 'px';
+    document.body.style.marginTop = (window.innerHeight - h - padding) / 2 + 'px';
+    stage.setZoom(w / 480);
   }
 
   function preventDefault(e) {

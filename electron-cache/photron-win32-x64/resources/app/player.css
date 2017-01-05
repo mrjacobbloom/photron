@@ -21,6 +21,7 @@
 }
 body {
   margin: 0;
+  background: black;
 }
 .controls {
   position: fixed;

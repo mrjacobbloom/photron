@@ -13,8 +13,8 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 480, height: 360 + 32, frame: false, resizable: false})
-  mainWindow.setAspectRatio(480/(360+32));
+  mainWindow = new BrowserWindow({width: 480, height: 360 + 32, frame: false})
+  //mainWindow.setAspectRatio(480/(360+32));
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
