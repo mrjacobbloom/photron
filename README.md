@@ -1,4 +1,4 @@
-Package Scratch projects as native applications using Phosphorus and Electron. I made this just for the name. [photron.heroku.com](http://photron.heroku.com)
+Package Scratch projects as native applications using Phosphorus and Electron. I made this just for the name. [photron.herokuapp.com](http://photron.herokuapp.com)
 
 ## Developing locally
 See the [wiki](https://github.com/Airhogs777/photron/wiki).
